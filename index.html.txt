@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HBD Final Version</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+:root { --bg:#000; --blue:#00d2ff; --pink:#ff0055; }
+
+body,html{
+margin:0;padding:0;min-height:100vh;
+font-family:'Kanit',sans-serif;
+background:var(--bg);color:white;
+display:flex;justify-content:center;align-items:center;
+overflow:hidden;
+}
+
+#matrix-canvas{
+position:fixed;top:0;left:0;width:100%;height:100%;
+z-index:1;opacity:0.5;
+}
+
+.container{
+text-align:center;width:85%;max-width:400px;
+display:none;z-index:10;position:relative;
+}
+.active{display:block;animation:fadeIn .8s;}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+input{
+width:80%;padding:15px;border-radius:12px;
+border:2px solid var(--blue);
+background:#000;color:white;text-align:center;
+font-size:1.2rem;margin-bottom:10px;
+}
+
+.wish-btn{
+background:var(--blue);color:black;border:none;
+padding:15px 25px;border-radius:50px;
+cursor:pointer;margin:8px;
+box-shadow:0 0 15px var(--blue);
+}
+
+.photo-frame{
+width:220px;height:220px;border:3px solid var(--blue);
+border-radius:50%;overflow:hidden;margin:20px auto;
+box-shadow:0 0 25px var(--blue);
+}
+.photo-frame img{width:100%;height:100%;object-fit:cover;}
+
+#timer{font-size:5rem;color:var(--blue);}
+#wish-display{margin:15px;font-size:1.2rem;}
+
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<div id="page-login" class="container active">
+<h1>ใส่รหัสผ่าน 🔒</h1>
+<input type="password" id="pass-input">
+<button class="wish-btn" onclick="checkPass()">ถัดไป</button>
+</div>
+
+<div id="page-timer" class="container">
+<div id="timer">3</div>
+</div>
+
+<div id="page-main" class="container">
+<h1>HAPPY BIRTHDAY 🎉</h1>
+
+<div class="photo-frame" onclick="changePhoto()">
+<img id="display-img" src="https://dreamengine.in/wp-content/uploads/2021/07/what-is-gif-and-what-are-its-uses-1-2.gif">
+</div>
+
+<div id="wish-display">สุขสันต์วันเกิดนะ 💙</div>
+
+<button class="wish-btn" onclick="showWish()">สุ่มคำอวยพร 🎁</button>
+<button class="wish-btn" style="background:var(--pink);color:white;" onclick="tellSomething()">สิ่งที่อยากจะบอก 💬</button>
+
+</div>
+
+<!-- เพลง -->
+<audio id="music1" loop><source src="music1.mp3"></audio>
+<audio id="music2"><source src="music2.mp3"></audio>
+<audio id="music3" loop><source src="music3.mp3"></audio>
+
+<script>
+
+const CORRECT_PASS="27042555";
+const photos=[
+"https://www.image2url.com/r2/default/images/1777210695445-7bff6609-6c95-4e7c-9263-7024119c7775.jpeg",
+"https://www.image2url.com/r2/default/images/1777210779841-751f1616-7dcc-43d4-afb5-e909c8803122.jpeg"
+];
+const wishes=["มีความสุขมากๆ","รวยๆ","เป็นเพื่อนกันตลอดไป"];
+
+let photoIdx=0;
+
+/* 🔥 MATRIX */
+function initMatrix(){
+const canvas=document.getElementById('matrix-canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+
+const letters="HBD🎉";
+const fontSize=14;
+const columns=canvas.width/fontSize;
+const drops=Array(Math.floor(columns)).fill(1);
+
+setInterval(()=>{
+ctx.fillStyle="rgba(0,0,0,0.1)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="#00d2ff";
+ctx.font=fontSize+"px arial";
+
+for(let i=0;i<drops.length;i++){
+const text=letters[Math.floor(Math.random()*letters.length)];
+ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+
+if(drops[i]*fontSize>canvas.height&&Math.random()>0.975) drops[i]=0;
+drops[i]++;
+}
+},33);
+}
+
+/* 🔐 LOGIN */
+function checkPass(){
+if(document.getElementById('pass-input').value===CORRECT_PASS){
+
+// 🔓 unlock audio (มือถือ)
+['music1','music2','music3'].forEach(id=>{
+let a=document.getElementById(id);
+a.play().then(()=>{
+a.pause();
+a.currentTime=0;
+}).catch(()=>{});
+});
+
+initMatrix();
+showPage('page-login','page-timer');
+startCountdown();
+
+}else{
+alert("รหัสไม่ถูกนะ 💙");
+}
+}
+
+/* ⏱ COUNTDOWN */
+function startCountdown(){
+let count=3;
+let t=document.getElementById('timer');
+
+let i=setInterval(()=>{
+count--;
+t.innerText=count;
+
+if(count<=0){
+clearInterval(i);
+showPage('page-timer','page-main');
+playMusic('music1');
+confetti({particleCount:100});
+}
+},1000);
+}
+
+/* 🎵 เล่นเพลงทีละเพลง (แก้แล้ว) */
+function playMusic(id){
+const musics=['music1','music2','music3'];
+
+musics.forEach(m=>{
+let a=document.getElementById(m);
+if(m!==id){
+a.pause();
+a.currentTime=0;
+}
+});
+
+let music=document.getElementById(id);
+
+if(music.paused){
+music.volume=0;
+music.play().catch(()=>{});
+
+let v=0;
+let fade=setInterval(()=>{
+if(v<0.7){
+v+=0.05;
+music.volume=v;
+}else{
+clearInterval(fade);
+}
+},100);
+}
+}
+
+/* 🎁 ฟีเจอร์ */
+function changePhoto(){
+photoIdx=(photoIdx+1)%photos.length;
+document.getElementById('display-img').src=photos[photoIdx];
+}
+
+function showWish(){
+document.getElementById('wish-display').innerText=
+wishes[Math.floor(Math.random()*wishes.length)];
+confetti({particleCount:30});
+}
+
+function tellSomething(){
+let d=document.getElementById('wish-display');
+
+d.innerText="รอแปปนะ...";
+playMusic('music2');
+
+setTimeout(()=>{
+d.innerText="รักมึงนะ 💙";
+playMusic('music3');
+confetti({particleCount:150});
+},3000);
+}
+
+/* 🔁 page */
+function showPage(oldId,newId){
+document.getElementById(oldId).classList.remove('active');
+document.getElementById(newId).classList.add('active');
+}
+
+</script>
+</body>
+</html>
